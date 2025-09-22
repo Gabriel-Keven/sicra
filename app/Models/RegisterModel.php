@@ -25,8 +25,16 @@ class RegisterModel extends Model
         protected $createField = 'created_at';
         protected $updateField = 'updated_at';
 
+
+
+    public function searchUsersHavePublicKey($userId){
+        $sql = "SELECT name, email, public_key
+        FROM users
+        WHERE public_key IS NOT NULL
+        AND public_key != ''
+        AND id <> $userId";
+        $query = $this->db->query($sql);
+        return $query->getResultArray();
+    }
 }
-
-
-
 ?>

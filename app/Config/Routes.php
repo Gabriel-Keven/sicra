@@ -33,5 +33,12 @@ $routes->get('/crypto', 'CryptoController::index');
 $routes->post('insertPublicKey', 'CryptoController::insertPublicKey');
 
 //3 - Método para verificar se as chaves já foram geradas
-$routes->post('checkPairOfKeysIsCreated', 'CryptoController::checkPairOfKeysIsCreated');
+$routes->post('checkPublicKey', 'CryptoController::checkPairOfKeysIsCreated');
+
+//4 - Método para deletar a chave pública
+$routes->post('deletePublicKey', 'CryptoController::deletePublicKey');
+
+//5 - Método para verificar usuários que têm a chave pública
+$routes->post('searchUsersHavePublicKey', 'CryptoController::searchUsersHavePublicKey');
+
 // Crypto

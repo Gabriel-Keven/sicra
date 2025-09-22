@@ -5,8 +5,7 @@ use  \App\Models\RegisterModel;
 
 class CryptoController extends BaseController
 {
-    public function index()
-    {
+    public function index(){
         $session = \Config\Services::session();
 		if($session->get('logged_in') === NULL ){
             echo view('LoginView');
@@ -77,6 +76,51 @@ class CryptoController extends BaseController
             }
     }
 
+    public function deletePublicKey(){
+         //Obter dados da sessão
+        $session = \Config\Services::session();
+        if($session->get('logged_in') === NULL ){
+            return $this->response->setJSON([
+                'type' => 'error',
+                'message' => 'Falha ao obter os dados da sessão.'
+            ]);
+		}
+
+        // Cadastrar usuário
+        $model = new RegisterModel();
+        $resultInsert = $model->save([
+            'id' => $session->get()['id'],
+            'public_key' => "",
+        ]);
+        
+        //Se houver erro na inserção do banco de dados
+        $errors = $model->errors();
+        if(sizeof($errors)>0){
+            $message = "";
+            foreach ($errors as $error) {
+                $message.=" ".$error;
+            }
+
+            return $this->response->setJSON([
+                'type' => 'error',
+                'message' => $message
+            ]);
+        }
+
+        if ($resultInsert) {
+            return $this->response->setJSON([
+                'type' => 'success',
+                'message' => 'Chave Pública excluída com sucesso no banco de dados.'
+            ]);
+           
+        }else{
+            return $this->response->setJSON([
+                    'type' => 'error',
+                    'message' => 'Chave pública não excluída no banco de dados.'
+                ]);
+            }
+    }
+
     public function checkPairOfKeysIsCreated(){
          //Obter dados da sessão
         $session = \Config\Services::session();
@@ -94,14 +138,37 @@ class CryptoController extends BaseController
         
         if ($publicKey === NULL || $publicKey === "") {
             return $this->response->setJSON([
-                'type' => 'success',
+                'type' => 'error',
                 'message' => 'Primeiro acesso para gerar o par de chaves.'
             ]);
-           
         }else{
             return $this->response->setJSON([
-                    'type' => 'error',
-                    'message' => 'Novo acesso para gerar outro par de chaves.'
+                    'type' => 'success',
+                    'message' => 'Novo acesso para gerar outro par de chaves.',
+                    'publicKey' =>$publicKey
+                ]);
+            }
+    }
+    public function searchUsersHavePublicKey(){
+         //Obter dados da sessão
+        $session = \Config\Services::session();
+        if($session->get('logged_in') === NULL ){
+           return redirect()->to('/login');
+		}
+        $userId = $session->get()['id'];
+        $model = new RegisterModel();
+        $users = $model->searchUsersHavePublicKey($userId);
+        
+        if (sizeof($users) == 0) {
+            return $this->response->setJSON([
+                'type' => 'error',
+                'message' => 'Não foram encontrados usuários com chave pública cadastrada.'
+            ]);
+        }else{
+            return $this->response->setJSON([
+                    'type' => 'success',
+                    'message' => 'Usuários com chave pública cadastraddos.',
+                    'users' =>$users
                 ]);
             }
     }
