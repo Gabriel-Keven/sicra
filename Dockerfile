@@ -1,16 +1,23 @@
-FROM php:8.1-apache
+FROM php:8.2-apache
 
-# Instala extensões necessárias
-RUN docker-php-ext-install mysqli pdo pdo_mysql
+# Instalar dependências e extensões do PHP necessárias para o CI4
+RUN apt-get update && apt-get install -y libicu-dev git unzip \
+    && docker-php-ext-install intl mysqli pdo pdo_mysql
 
-# Ativa o mod_rewrite do Apache (necessário para CI4)
-RUN a2enmod rewrite
+# Habilitar mod_rewrite do Apache e configurar para usar a pasta /public
+RUN a2enmod rewrite \
+    && sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
+    && echo "<Directory /var/www/html/public>\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>" > /etc/apache2/conf-available/ci4.conf \
+    && a2enconf ci4
 
-# Copia os arquivos da aplicação para o container
-COPY . /var/www/html/
+# Definir diretório de trabalho
+WORKDIR /var/www/html
 
-# Permissões (ajuste conforme necessário)
-RUN chown -R www-data:www-data /var/www/html && chmod -R 755 /var/www/html
+# Copiar os arquivos do projeto para dentro do container
+COPY . .
 
-# Substitui a config do Apache para servir a raiz corretamente
-COPY apache.conf /etc/apache2/sites-available/000-default.conf
+# Ajustar permissões
+RUN chown -R www-data:www-data /var/www/html
