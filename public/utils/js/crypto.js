@@ -3,7 +3,7 @@
 // =============================
 
 // Botões
-const buttonSend = document.getElementById('buttonSend');
+const buttonSendFile = document.getElementById('buttonSendFile');
 const buttonFirstPairKeys = document.getElementById('buttonFirstPairKeys');
 const buttonNewPairKeys = document.getElementById('buttonNewPairKeys');
 const buttonDeletePublicKey = document.getElementById('buttonDeletePublicKey');
@@ -19,6 +19,9 @@ const cardTablePublicKeyUsers = document.getElementById('cardTablePublicKeyUsers
 const tablePublicKeyContent = document.getElementById('tablePublicKeyContent');
 const tablePublicKeyUsersContent = document.getElementById('tablePublicKeyUsersContent');
 
+//Select
+const selectIdRecipient = document.getElementById('selectIdRecipient');
+
 // Alerta para mensagens
 const message = document.getElementById('message');
 const contentMessage = document.getElementById('contentMessage');
@@ -28,7 +31,8 @@ const API = {
     insertPublicKey: "insertPublicKey",
     deletePublicKey: "deletePublicKey",
     checkPublicKey:  "checkPublicKey",
-    searchUsersHavePublicKey: "searchUsersHavePublicKey"
+    searchUsersHavePublicKey: "searchUsersHavePublicKey",
+    sendFileCrypted: "sendFileCrypted"
 };
 
 // =============================
@@ -36,6 +40,7 @@ const API = {
 // =============================
 showInitialCard();
 showTableUsersHavePublicKey();
+showUsersToSendFile();
 
 // =============================
 // Funções de UI
@@ -194,28 +199,61 @@ async function searchUsersHavePublicKey() {
 }
 async function showTableUsersHavePublicKey() {
     const result = await apiRequest(API.searchUsersHavePublicKey);
+
+    // Limpa o conteúdo da tabela
     tablePublicKeyUsersContent.textContent = '';
+
+    // Percorre cada usuário
+    result.users.forEach(user => {
+    // Cria nova linha
     const newRow = document.createElement('tr');
-    const cellPublicKeyUsersName = document.createElement('td');
-    const cellPublicKeyUsersEmail = document.createElement('td');
-    const cellPublicKeyUsersPublicKey = document.createElement('td');
 
-    Object.keys(result.users).forEach(key => {
-        console.log(`Key: ${key}, Value: ${result.users[key]}`);
-    });
-    
+    // Cria as células
+    const cellId = document.createElement('td');
+    const cellName = document.createElement('td');
+    const cellEmail = document.createElement('td');
+    const cellPublicKey = document.createElement('td');
 
-    // if (result.type === 'success') {
-    //     cellPublicKeyUsersName.textContent = result.publicKey;
-    //     cellPublicKeyUsersEmail.textContent = result.publicKey;
-    //     cellPublicKeyUsersPublicKey.textContent = result.publicKey;
-    // } else {
-    //     cellPublicKeyUsersName.textContent = '';
-    //     cellPublicKeyUsersEmail.textContent = '';
-    //     cellPublicKeyUsersPublicKey.textContent = '';
-    // }
-    // newRow.appendChild(cellPublicKeyUsers);
-    // tablePublicKeyUsersContent.appendChild(newRow);
+    // Preenche os dados
+    cellId.textContent = user.id;
+    cellName.textContent = user.name;
+    cellEmail.textContent = user.email;
+    cellPublicKey.textContent = user.public_key;
+
+    // Adiciona as células à linha
+    newRow.appendChild(cellId);
+    newRow.appendChild(cellName);
+    newRow.appendChild(cellEmail);
+    newRow.appendChild(cellPublicKey);
+
+    // Adiciona a linha à tabela
+    tablePublicKeyUsersContent.appendChild(newRow);
+});
+
+}
+// =============================
+// Seleção dos usuários para enviar o arquivo
+// =============================
+
+async function showUsersToSendFile (){
+    const result = await apiRequest(API.searchUsersHavePublicKey);
+    selectIdRecipient.innerHTML = ''; //Limpa o select
+
+    // Adiciona uma option para cada usuário
+    result.users.forEach(user => {
+        const option = document.createElement('option');
+        
+        // Você pode usar o que quiser como "value". Aqui, estou usando o email
+        option.value = user.id;
+
+        // O texto visível no select
+        option.textContent = `${user.name} (${user.email})`;
+
+        // Data attributes
+        option.dataset.publicKey = user.public_key;
+
+        selectIdRecipient.appendChild(option);
+        });
 }
 
 // =============================
@@ -280,3 +318,71 @@ buttonDeletePublicKey.addEventListener('click', async () => {
     }
     await showPublicKeyTable();
 });
+
+buttonSendFile.addEventListener('click', function(event) {
+    event.preventDefault(); // impede o envio do formulário
+   
+    //Obtendo o arquivo
+    const inputFile = document.getElementById('file');
+    const file = inputFile.files[0];
+    
+    //Verificação se o arquivo foi selecionado
+    if(!file)
+    {
+        showMessage("warning", "Nenhum arquivo selecionado.");
+    }
+    else
+    {
+        
+        const selectIdRecipientOption = selectIdRecipient.options[selectIdRecipient.selectedIndex];
+        const publicKeySelected = selectIdRecipientOption.dataset.publicKey;
+
+        //Verificação se a chave pública foi obtida
+        if(!publicKeySelected)
+        {
+            showMessage("warning", "Não foi possível obter a chave pública do destinatário.");
+        }
+        else
+        {
+            
+            // Leitura do arquivo com FileReader
+            const reader = new FileReader();
+            
+            // Lê o arquivo como texto
+            reader.readAsText(file);
+            
+            // Quando a leitura terminar
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                    
+                // Instancia o objeto de criptografia
+                const crypt = new JSEncrypt();
+                    
+                // Chave pública do destinatário
+                crypt.setPublicKey(publicKeySelected);
+                
+                // Criptografa o texto
+                const textEncrypted = crypt.encrypt(text);
+                
+                //Verificação se a criptografia foi feita
+                if(textEncrypted){
+                    const result = await apiRequest(API.sendFileCrypted, "POST", { textEncrypted: textEncrypted });
+                    if (result.type === 'success') {
+                        showMessage("success", result.message);
+                        return { success: true, message: result.message, users: result.users };
+                    } else {
+                        showMessage("error", result.message);
+                        return { success: false, message: result.message, users: result.users };
+                    }
+                }else{
+                    showMessage("error", "Não foi possível realizar a criptografia do arquivo.")
+                }
+                
+            }   
+            
+        }
+    }
+        
+});
+    
+    

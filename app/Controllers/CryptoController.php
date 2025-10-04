@@ -172,5 +172,17 @@ class CryptoController extends BaseController
                 ]);
             }
     }
+    public function sendFileCrypted(){
+        //Obter dados da sessão
+        $session = \Config\Services::session();
+        if($session->get('logged_in') === NULL ){
+           return redirect()->to('/login');
+		}
+        //Texto criptografado
+        $textEncrypted = $this->request->getJSON(true); //Conversão do JSON para array
+
+        
+        
+    }
 
 }

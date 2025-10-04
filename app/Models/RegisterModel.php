@@ -28,7 +28,7 @@ class RegisterModel extends Model
 
 
     public function searchUsersHavePublicKey($userId){
-        $sql = "SELECT name, email, public_key
+        $sql = "SELECT id, name, email, public_key
         FROM users
         WHERE public_key IS NOT NULL
         AND public_key != ''

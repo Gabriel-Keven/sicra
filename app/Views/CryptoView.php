@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SICRA - Sistema de Criptografia RSA para arquivos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="container mt-5">
         <div class="row justify-content-center">
-            <div class="col-md-10 col-lg-6">
+            <div class="col-md-10 col-lg-12">
                 <div class="alert alert-primary d-none" role="alert" id="message">
                     <p class="text-center" id="contentMessage"></p>
                 </div>
@@ -50,7 +50,7 @@
                             <table class="table" id="tablePublicKey">
                                 <thead id="tablePublicKeyHeader">
                                     <tr>
-                                    <th scope="col">Chave Pública</th>
+                                    <th scope="col">Sua Chave Pública</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tablePublicKeyContent">
@@ -58,11 +58,29 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-12">
+                <div class="alert alert-primary d-none" role="alert" id="message">
+                    <p class="text-center" id="contentMessage"></p>
+                </div>
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h4>Criptografar e enviar arquivo para os usuários</h4>
+                    </div>
+                    <div class="card-body">
                         <div id="cardTablePublicKeyUsers" class="table-responsive mt-3 ">
                             <h4>Usuários disponíveis para enviar o arquivo.</h4>
                             <table class="table">
                                 <thead class="tablePublicKeyUsersHeader">
                                     <tr>
+                                    <th scope="col">Id</th>
                                     <th scope="col">Nome</th>
                                     <th scope="col">Email</th>
                                     <th scope="col">Chave Pública</th>
@@ -72,13 +90,18 @@
                                 </tbody>
                             </table>
                         </div>
-                        <form>
-                                <!-- Colocar verificação se a chave já foi criada e em seguida no outro usuário colocar a opção de enviar o arquivo para o gerador da chave -->
+                        <form class="form-control" method="POST">
                             <div class="form-group">
-                                <!-- <label for="file">Fazer upload do arquivo</label> -->
-                                <!-- <input type="file" class="form-control" id="file" placeholder="Envie aqui o arquivo" required> -->
+                                <label for="file">Selecione o usuário para quem você deseja enviar o arquivo</label>
+                                <select class="form-control" id="selectIdRecipient">
+                                    <option value="">Selecione o usuário que irá receber o arquivo.</option>
+                                </select>
                             </div>
-                            <!-- <button type="submit" class="mt-3 btn btn-primary btn-block" id="buttonSend">Enviar</button> -->
+                            <div class="form-group">
+                                <label for="file">Fazer upload do arquivo</label>
+                                <input type="file" class="form-control" id="file" placeholder="Envie aqui o arquivo" required>
+                            </div>
+                            <button type="submit" class="mt-3 btn btn-success btn-block" id="buttonSendFile">Enviar Arquivo</button>
                         </form>
                     </div>
                 </div>
