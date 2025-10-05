@@ -23,6 +23,10 @@ $routes->get('/login', 'LoginController::index');
 
 //2 - Método de login do usuário
 $routes->post('login', 'LoginController::login');
+
+//3 - Método logout
+$routes->get('logout', 'LoginController::logout');
+
 // Register
 
 // Crypto
@@ -54,5 +58,11 @@ $routes->get('/descrypto', 'DescryptoController::index');
 
 //1 - Página Incial de descriptografia arquivo
 $routes->get('/user', 'UserController::index');
+
+//2 - Obter dados do usuário do banco de dados
+$routes->post('getDateUser', 'UserController::getDateUser');
+
+//2 - Atualizar os dados do usuário no banco de dados
+$routes->post('updateUser', 'UserController::updateUser');
 
 // User

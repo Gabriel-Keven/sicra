@@ -55,10 +55,12 @@
                                     required
                                 >
                             </div>
-                            <button type="submit" class="mt-3 btn btn-success btn-block" id="registerButton">Cadastrar</button>
-                            <br>
-                            <a href="<?=base_url('/login')?>" class="mt-3 btn btn-primary btn-block">Tela de Login</a>
-                            <a href="<?=base_url('/')?>" class="mt-3 btn btn-secondary btn-block">Tela Inicial</a>
+                            <div class="card-footer">
+                                <button type="submit" class="mt-3 btn btn-success btn-block" id="buttonRegister">Cadastrar</button>
+                                <br>
+                                <a href="<?=base_url('/login')?>" class="mt-3 btn btn-primary btn-block">Tela de Login</a>
+                                <a href="<?=base_url('/')?>" class="mt-3 btn btn-secondary btn-block">Tela Inicial</a>
+                            </div>
                         </form>
                     </div>
                 </div>

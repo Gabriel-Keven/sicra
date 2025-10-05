@@ -3,10 +3,10 @@ const message = document.getElementById('message');
 const contentMessage = document.getElementById('contentMessage');
 
 // Botão que envia o formulário
-const registerButton = document.getElementById('registerButton');
+const buttonRegister = document.getElementById('buttonRegister');
 
 // Interromper funcionamento padrão do botão
-registerButton.addEventListener('click', function(event) {
+buttonRegister.addEventListener('click', function(event) {
     event.preventDefault();
     // Obter os valores do formulário e remover espaços extras
     const name = document.getElementById('name').value.trim();
@@ -62,7 +62,7 @@ async function sendUser(user) {
             message.classList.add('alert-danger');
         }
         contentMessage.textContent = `Resposta: ${data.message}`; 
-        registerButton.classList.remove('d-none');
+        buttonRegister.classList.remove('d-none');
     } catch (error) {
         console.error("Falha ao enviar:", error);
         alert("Erro na requisição: " + error.message);

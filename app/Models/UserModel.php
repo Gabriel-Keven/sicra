@@ -36,5 +36,12 @@ class UserModel extends Model
         $query = $this->db->query($sql);
         return $query->getResultArray();
     }
+    public function getUserData($userId){
+        $sql = "SELECT id, name, email
+        FROM users
+        WHERE id = $userId";
+        $query = $this->db->query($sql);
+        return $query->getResultArray();
+    }
 }
 ?>
