@@ -26,7 +26,7 @@ $routes->post('login', 'LoginController::login');
 // Register
 
 // Crypto
-//1 - Página Incial do Login
+//1 - Página Incial de criptografia arquivo
 $routes->get('/crypto', 'CryptoController::index');
 
 //2 - Método de inserir a chave pública no banco de dados
@@ -42,3 +42,17 @@ $routes->post('deletePublicKey', 'CryptoController::deletePublicKey');
 $routes->post('searchUsersHavePublicKey', 'CryptoController::searchUsersHavePublicKey');
 
 // Crypto
+
+// Descrypto
+
+//1 - Página Incial de descriptografia arquivo
+$routes->get('/descrypto', 'DescryptoController::index');
+
+// Descrypto
+
+// User
+
+//1 - Página Incial de descriptografia arquivo
+$routes->get('/user', 'UserController::index');
+
+// User

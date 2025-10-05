@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Controllers;
-use  \App\Models\RegisterModel;
+use  \App\Models\UserModel;
 
 class CryptoController extends BaseController
 {
@@ -42,7 +42,7 @@ class CryptoController extends BaseController
         );
 
         // Cadastrar usuário
-        $model = new RegisterModel();
+        $model = new UserModel();
         $resultInsert = $model->save([
             'id' => $session->get()['id'],
             'public_key' => $cleanPublicKey,
@@ -87,7 +87,7 @@ class CryptoController extends BaseController
 		}
 
         // Cadastrar usuário
-        $model = new RegisterModel();
+        $model = new UserModel();
         $resultInsert = $model->save([
             'id' => $session->get()['id'],
             'public_key' => "",
@@ -128,7 +128,7 @@ class CryptoController extends BaseController
            return redirect()->to('/login');
 		}
 
-        $model = new RegisterModel();
+        $model = new UserModel();
         $resultSelect = $model
                             ->select('public_key')
                             ->where('id', $session->get()['id'])
@@ -156,7 +156,7 @@ class CryptoController extends BaseController
            return redirect()->to('/login');
 		}
         $userId = $session->get()['id'];
-        $model = new RegisterModel();
+        $model = new UserModel();
         $users = $model->searchUsersHavePublicKey($userId);
         
         if (sizeof($users) == 0) {

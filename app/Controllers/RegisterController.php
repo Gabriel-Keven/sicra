@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Controllers;
-use  \App\Models\RegisterModel;
+use  \App\Models\UserModel;
 
 class RegisterController extends BaseController
 {
@@ -30,7 +30,7 @@ class RegisterController extends BaseController
         }
         
         // Cadastrar usuário
-        $model = new RegisterModel();
+        $model = new UserModel();
         $resultInsert = $model->save([
             'name' => $name,
             'email' => $email,

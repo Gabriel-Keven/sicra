@@ -1,13 +1,4 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SICRA - Sistema de Criptografia RSA para arquivos</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-</head>
-<body>
+   <?=view("static/HeaderView.php");?>
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-10 col-lg-6">
@@ -42,10 +33,11 @@
                                     required
                                 >
                             </div>
-                            <button type="submit" class="mt-3 btn btn-success btn-block" id="loginButton">Login</button>
-                            <br>
-                            <a href="<?=base_url('/register')?>" class="mt-3 btn btn-primary btn-block">Tela de Cadastro</a>
-                            <a href="<?=base_url('/')?>" class="mt-3 btn btn-secondary btn-block">Tela inicial</a>
+                            <div class="card-footer">
+                                <button type="submit" class="mt-3 btn btn-success btn-block" id="loginButton">Login</button>
+                                <a href="<?=base_url('/register')?>" class="mt-3 btn btn-primary btn-block">Cadastro</a>
+                                <a href="<?=base_url('/')?>" class="mt-3 btn btn-secondary btn-block">Início</a>
+                            </div>
                         </form>
                     </div>
                 </div>
