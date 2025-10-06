@@ -55,6 +55,7 @@ async function sendUser(user) {
 
         if(data.type == 'success'){
             message.classList.add('alert-success');
+            document.getElementById('password').value = '';
         }else{
             message.classList.add('alert-danger');
         }

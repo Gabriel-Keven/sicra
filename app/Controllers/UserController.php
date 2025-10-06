@@ -30,24 +30,27 @@ class UserController extends BaseController
                 'type' => $validationErrors['type'],
                 'message' => $validationErrors['message']
             ]);
-        }
-        
+        } 
+         $session = \Config\Services::session();
+        if($session->get('logged_in') === NULL ){
+           return redirect()->to('/login');
+		}
+        $userId = $session->get()['id'];
         // Alterar usuário
         $model = new UserModel();
-        if($password === "" ||  $password=== NULL){
-            $resultInsert = $model->save([
-            'id' => $id,
-            'name' => $name,
-            'email' => $email
-        ]);
-        
+        if($password == "" ||  $password == NULL){
+                $resultInsert = $model->save([
+                'id' => $userId,
+                'name' => $name,
+                'email' => $email
+            ]);
         }else{
-             $resultInsert = $model->save([
-            'id' => $id,
-            'name' => $name,
-            'email' => $email,
-            'password_hash' =>md5($password)
-        ]);
+            $resultInsert = $model->save([
+                'id' => $userId,
+                'name' => $name,
+                'email' => $email,
+                'password_hash' =>md5($password)
+            ]);
         
         }
         
@@ -84,7 +87,8 @@ class UserController extends BaseController
         // Definindo as regras de validação
         $validationRules = [
             'name'           => 'required|min_length[3]',
-            'email'          => 'required|valid_email'
+            'email'          => 'required|valid_email',
+            'password'       => 'permit_empty'
         ];
 
         // Mensagens personalizadas para cada campo
@@ -96,7 +100,11 @@ class UserController extends BaseController
             'email' => [
                 'required'    => 'O e-mail é obrigatório.',
                 'valid_email' => 'O e-mail informado é inválido.',
+            ],
+            'password' => [
+                'permit_empty' => 'Alteração de senha opcional'
             ]
+            
         ];
 
         // Aplica a validação
