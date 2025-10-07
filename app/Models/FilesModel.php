@@ -3,7 +3,7 @@
 namespace App\Models;
 use CodeIgniter\Model;
 
-class RegisterModel extends Model
+class FilesModel extends Model
 {
     
     protected $table      = 'files';
@@ -15,7 +15,6 @@ class RegisterModel extends Model
         'recipient_id',
         'filename',
         'file_path',
-        'encrypted_aes_key',
         'uploaded_at',
     ];
 

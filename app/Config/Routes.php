@@ -45,6 +45,9 @@ $routes->post('deletePublicKey', 'CryptoController::deletePublicKey');
 //5 - Método para verificar usuários que têm a chave pública
 $routes->post('searchUsersHavePublicKey', 'CryptoController::searchUsersHavePublicKey');
 
+//6 - Método que recebe o arquivo criptografado do JS
+$routes->post('sendFileCrypted', 'CryptoController::sendFileCrypted');
+
 // Crypto
 
 // Descrypto

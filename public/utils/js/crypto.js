@@ -319,70 +319,63 @@ buttonDeletePublicKey.addEventListener('click', async () => {
     await showPublicKeyTable();
 });
 
-buttonSendFile.addEventListener('click', function(event) {
-    event.preventDefault(); // impede o envio do formulário
-   
-    //Obtendo o arquivo
+buttonSendFile.addEventListener('click', async function(event) {
+    event.preventDefault();
+
     const inputFile = document.getElementById('file');
     const file = inputFile.files[0];
-    
-    //Verificação se o arquivo foi selecionado
-    if(!file)
-    {
-        showMessage("warning", "Nenhum arquivo selecionado.");
-    }
-    else
-    {
-        
-        const selectIdRecipientOption = selectIdRecipient.options[selectIdRecipient.selectedIndex];
-        const publicKeySelected = selectIdRecipientOption.dataset.publicKey;
 
-        //Verificação se a chave pública foi obtida
-        if(!publicKeySelected)
-        {
-            showMessage("warning", "Não foi possível obter a chave pública do destinatário.");
-        }
-        else
-        {
-            
-            // Leitura do arquivo com FileReader
-            const reader = new FileReader();
-            
-            // Lê o arquivo como texto
-            reader.readAsText(file);
-            
-            // Quando a leitura terminar
-            reader.onload = async function(e) {
-                const text = e.target.result;
-                    
-                // Instancia o objeto de criptografia
-                const crypt = new JSEncrypt();
-                    
-                // Chave pública do destinatário
-                crypt.setPublicKey(publicKeySelected);
-                
-                // Criptografa o texto
-                const textEncrypted = crypt.encrypt(text);
-                
-                //Verificação se a criptografia foi feita
-                if(textEncrypted){
-                    const result = await apiRequest(API.sendFileCrypted, "POST", { textEncrypted: textEncrypted });
-                    if (result.type === 'success') {
-                        showMessage("success", result.message);
-                        return { success: true, message: result.message, users: result.users };
-                    } else {
-                        showMessage("error", result.message);
-                        return { success: false, message: result.message, users: result.users };
-                    }
-                }else{
-                    showMessage("error", "Não foi possível realizar a criptografia do arquivo.")
-                }
-                
-            }   
-            
-        }
+    if (!file) {
+        showMessage("warning", "Nenhum arquivo selecionado.");
+        return;
     }
-        
+
+    const selectIdRecipientOption = selectIdRecipient.options[selectIdRecipient.selectedIndex];
+    const publicKeySelected = selectIdRecipientOption.dataset.publicKey;
+    const recipientId = selectIdRecipientOption.value; // Obter ID do receptor
+
+    if (!publicKeySelected) {
+        showMessage("warning", "Não foi possível obter a chave pública do destinatário.");
+        return;
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+
+    const crypt = new JSEncrypt();
+    crypt.setPublicKey(publicKeySelected);
+
+    const blockSize = 190; // <= 245 bytes máximo, margem de segurança para padding
+    const encryptedBlocks = [];
+
+    for (let i = 0; i < buffer.length; i += blockSize) {
+        const chunk = buffer.slice(i, i + blockSize);
+
+        // Convertemos o chunk para string antes de criptografar (RSA trabalha com strings)
+        const chunkStr = String.fromCharCode(...chunk);
+        const encrypted = crypt.encrypt(chunkStr);
+
+        if (!encrypted) {
+            showMessage("error", `Erro ao criptografar bloco ${i / blockSize + 1}`);
+            return;
+        }
+
+        encryptedBlocks.push(encrypted);
+    }
+
+    // Envio do JSON
+    const result = await apiRequest(API.sendFileCrypted, "POST", {
+        fileName: file.name,
+        fileType: file.type,
+        recipientId: recipientId,
+        encryptedBlocks: encryptedBlocks
+    });
+
+    if (result.type === 'success') {
+        showMessage("success", result.message);
+    } else {
+        showMessage("error", result.message);
+    }
 });
-    
+
     
