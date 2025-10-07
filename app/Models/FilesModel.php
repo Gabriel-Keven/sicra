@@ -18,5 +18,14 @@ class FilesModel extends Model
         'uploaded_at',
     ];
 
+      public function searchCryptedFiles($userId){
+        $sql = "SELECT f.id as upload_id, f.sender_id,
+        u.name as name_sender, f.filename, f.uploaded_at, f.file_path
+                FROM users as u, files as f
+                WHERE f.recipient_id = $userId 
+                AND u.id = f.sender_id";
+        $query = $this->db->query($sql);
+        return $query->getResultArray();
+    }
 }
 ?>

@@ -170,89 +170,90 @@ class CryptoController extends BaseController
                 ]);
             }
     }
-    public function sendFileCrypted() {
-    $session = \Config\Services::session();
+    public function sendFileCrypted() 
+    {
+        $session = \Config\Services::session();
 
-    if (!$session->get('logged_in')) {
-        return redirect()->to('/login');
-    }
+        if (!$session->get('logged_in')) {
+            return redirect()->to('/login');
+        }
 
-    $data = $this->request->getJSON(true);
+        $data = $this->request->getJSON(true);
 
-    // Validação
-    if (!isset($data['fileName']) || !isset($data['encryptedBlocks']) || !isset($data['recipientId'])) {
-        return $this->response->setJSON([
-            'type' => 'error',
-            'message' => 'Dados incompletos.'
-        ]);
-    }
+        // Validação
+        if (!isset($data['fileName']) || !isset($data['encryptedBlocks']) || !isset($data['recipientId'])) {
+            return $this->response->setJSON([
+                'type' => 'error',
+                'message' => 'Dados incompletos.'
+            ]);
+        }
 
-    $fileName = basename($data['fileName']);
-    $encryptedBlocks = $data['encryptedBlocks'];
-    $recipientId = (int) $data['recipientId'];
-    $senderId = (int) $session->get('id'); 
+        $fileName = basename($data['fileName']);
+        $encryptedBlocks = $data['encryptedBlocks'];
+        $recipientId = (int) $data['recipientId'];
+        $senderId = (int) $session->get('id'); 
 
-    // Data atual
-    $dateFolder = date('Y-m-d_H-i-s'); 
+        // Data atual
+        $dateFolder = date('Y-m-d_H-i-s'); 
 
-    // Pasta organizada: uploads/2025-10-07/1_3/
-    $folderPath = WRITEPATH . 'uploads/' . $dateFolder . '/' . $senderId . '_to_' . $recipientId . '/';
+        // Pasta organizada: uploads/2025-10-07/1_3/
+        $folderPath = WRITEPATH . 'uploads/' . $dateFolder . '/' . $senderId . '_to_' . $recipientId . '/';
 
-    if (!is_dir($folderPath)) {
-        mkdir($folderPath, 0777, true);
-    }
+        if (!is_dir($folderPath)) {
+            mkdir($folderPath, 0777, true);
+        }
 
-    // Caminho completo do arquivo
-    $fullPath = $folderPath . $fileName . '.enc';
+        // Caminho completo do arquivo
+        $fullPath = $folderPath . $fileName . '.enc';
 
-    // Junta os blocos
-    $fileContent = implode("\n", $encryptedBlocks);
+        // Junta os blocos
+        $fileContent = implode("\n", $encryptedBlocks);
 
-    // Salva o arquivo
-    if (file_put_contents($fullPath, $fileContent) !== false) {
-        
-        // Cadastrar transferência do arquivo no bd
-        $model = new FilesModel();
-        $resultInsert = $model->save([
-            'sender_id' => $senderId,
-            'recipient_id' => $recipientId,
-            'filename' => $fileName,
-            'file_path' => $folderPath,
-            'uploaded_at' => $dateFolder
-        ]);
-        
-        //Se houver erro na inserção do banco de dados
-        $errors = $model->errors();
-        if(sizeof($errors)>0){
-            $message = "";
-            foreach ($errors as $error) {
-                $message.=" ".$error;
+        // Salva o arquivo
+        if (file_put_contents($fullPath, $fileContent) !== false) {
+            
+            // Cadastrar transferência do arquivo no bd
+            $model = new FilesModel();
+            $resultInsert = $model->save([
+                'sender_id' => $senderId,
+                'recipient_id' => $recipientId,
+                'filename' => $fileName,
+                'file_path' => $folderPath,
+                'uploaded_at' => $dateFolder
+            ]);
+            
+            //Se houver erro na inserção do banco de dados
+            $errors = $model->errors();
+            if(sizeof($errors)>0){
+                $message = "";
+                foreach ($errors as $error) {
+                    $message.=" ".$error;
+                }
+
+                return $this->response->setJSON([
+                    'type' => 'error',
+                    'message' => $message
+                ]);
             }
 
+            if ($resultInsert) {
+                return $this->response->setJSON([
+                    'type' => 'success',
+                    'message' => 'Arquivo criptografado salvo com sucesso.',
+                    'downloadUrl' => base_url('download/encrypted/' . $dateFolder . '/' . $senderId . '_' . $recipientId . '/' . urlencode($fileName))
+                ]);
+            } else {
+                return $this->response->setJSON([
+                    'type' => 'error',
+                    'message' => 'Erro ao salvar as informações no banco de dados.'
+                ]);
+            }
+        }else{
             return $this->response->setJSON([
-                'type' => 'error',
-                'message' => $message
-            ]);
-        }
-
-        if ($resultInsert) {
-            return $this->response->setJSON([
-                'type' => 'success',
-                'message' => 'Arquivo criptografado salvo com sucesso.',
-                'downloadUrl' => base_url('download/encrypted/' . $dateFolder . '/' . $senderId . '_' . $recipientId . '/' . urlencode($fileName))
-            ]);
-        } else {
-            return $this->response->setJSON([
-                'type' => 'error',
-                'message' => 'Erro ao salvar as informações no banco de dados.'
-            ]);
-        }
-    }else{
-         return $this->response->setJSON([
                 'type' => 'error',
                 'message' => 'Erro ao salvar o arquivo.'
             ]);
-    }
+        }
 
-}
+    }
 }

@@ -2,7 +2,7 @@
 <?=view("static/MenuView.php");?>
  <div class="container mt-5">
         <div class="row justify-content-center">
-            <div class="col-md-10 col-lg-8">
+            <div class="col-md-10 col-lg-12">
                 <div class="alert alert-primary d-none" role="alert" id="message">
                     <p class="text-center" id="contentMessage"></p>
                 </div>
@@ -11,22 +11,24 @@
                         <h4>Seus arquivos disponíveis para download</h4>
                     </div>
                     <div class="card-body">
-                        <table class="table" id="tablePublicKey">
+                        <table class="table" id="tableDownloadsFile">
                             <thead id="">
                                 <tr>
-                                <th>Emissor</th>
+                                <th>Id do Upload</th>
+                                <th>Id do Emissor</th>
+                                <th>Nome do Emissor</th>
                                 <th>Nome do arquivo</th>
                                 <th>Data do envio</th>
                                 </tr>
                             </thead>
-                            <tbody id="">
+                            <tbody id="tableDownloadsFileContent">
                                 
                             </tbody>
                         </table>
                         <form class="form-control" method="POST">
                             <div class="form-group">
                                 <label for="file">Selecione o arquivo que você deseja baixar.</label>
-                                <select class="form-control" id="">
+                                <select class="form-control" id="selectIdSender">
                                     <option value="">Selecione o arquivo que deseja fazer download.</option>
                                 </select>
                             </div>
@@ -34,7 +36,7 @@
                                 <label for="file">Fazer da chave privada(Não divgulge para ninguém)</label>
                                 <input type="file" class="form-control" id="file" placeholder="Envie a chave privada aqui" required>
                             </div>
-                            <button type="submit" class="mt-3 btn btn-success btn-block" id="">Baixar Arquivo descriptografado</button>
+                            <button type="submit" class="mt-3 btn btn-success btn-block" id="buttonDownloadFile">Baixar Arquivo descriptografado</button>
                         </form>
                     </div>
                 </div>

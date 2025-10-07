@@ -55,6 +55,10 @@ $routes->post('sendFileCrypted', 'CryptoController::sendFileCrypted');
 //1 - Página Incial de descriptografia arquivo
 $routes->get('/descrypto', 'DescryptoController::index');
 
+//2 - Método para verificar os arquivos enviados
+$routes->post('searchCryptedFiles', 'DescryptoController::searchCryptedFiles');
+
+
 // Descrypto
 
 // User
