@@ -58,6 +58,8 @@ $routes->get('/descrypto', 'DescryptoController::index');
 //2 - Método para verificar os arquivos enviados
 $routes->post('searchCryptedFiles', 'DescryptoController::searchCryptedFiles');
 
+//2 - Obter o arquivo criptografado
+$routes->post('getEncryptedFile', 'DescryptoController::getEncryptedFile');
 
 // Descrypto
 

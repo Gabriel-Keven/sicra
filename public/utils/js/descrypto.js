@@ -21,7 +21,8 @@ const contentMessage = document.getElementById('contentMessage');
 
 // Endpoints API
 const API = {
-    searchCryptedFiles: "searchCryptedFiles"
+    searchCryptedFiles: "searchCryptedFiles",
+    getEncryptedFile: "getEncryptedFile"
 };
 
 // =============================
@@ -165,7 +166,6 @@ async function showFilesToDownload (){
 // Eventos
 // =============================
 
-
 buttonDownloadFile.addEventListener('click', async function(event) {
     event.preventDefault();
 
@@ -176,53 +176,57 @@ buttonDownloadFile.addEventListener('click', async function(event) {
         showMessage("warning", "Nenhum arquivo selecionado.");
         return;
     }
+    
+    //Leitura do arquivo com FileReader
+    const reader = new FileReader();
 
-    const selectIdRecipientOption = selectIdRecipient.options[selectIdRecipient.selectedIndex];
-    const publicKeySelected = selectIdRecipientOption.dataset.publicKey;
-    const recipientId = selectIdRecipientOption.value; // Obter ID do receptor
+    // Lê o arquivo como texto
+    reader.readAsText(file);
+    //Quando a leitura terminar
+    reader.onload = async function(e) {
+        const contentTextPrivateKey = cleanPrivateKey(e.target.result);
+        console.log(contentTextPrivateKey);
 
-    if (!publicKeySelected) {
-        showMessage("warning", "Não foi possível obter a chave pública do destinatário.");
-        return;
-    }
+        //Invocando biblioteca que realiza a criptografia
+        const crypt = new JSEncrypt();
+        crypt.setPrivateKey(contentTextPrivateKey)
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
+        const selectIdSenderOption = selectIdSender.options[selectIdSender.selectedIndex];
+        const filePathSelected = selectIdSenderOption.dataset.filePath;
+        console.log(filePathSelected);
+        const uploadFileId = selectIdSenderOption.value; // Obter ID do receptor
 
-    const crypt = new JSEncrypt();
-    crypt.setPublicKey(publicKeySelected);
-
-    const blockSize = 190; // <= 245 bytes máximo, margem de segurança para padding
-    const encryptedBlocks = [];
-
-    for (let i = 0; i < buffer.length; i += blockSize) {
-        const chunk = buffer.slice(i, i + blockSize);
-
-        // Convertemos o chunk para string antes de criptografar (RSA trabalha com strings)
-        const chunkStr = String.fromCharCode(...chunk);
-        const encrypted = crypt.encrypt(chunkStr);
-
-        if (!encrypted) {
-            showMessage("error", `Erro ao criptografar bloco ${i / blockSize + 1}`);
+        if (!filePathSelected) {
+            showMessage("warning", "Não foi o caminho do arquivo criptografado que foi feito upload.");
             return;
         }
+        // Busca os blocos criptografados da API
+        const result = await apiRequest(API.getEncryptedFile, "POST", {
+            uploadFileId: uploadFileId,
+            filePathSelected: filePathSelected
+        });
 
-        encryptedBlocks.push(encrypted);
-    }
 
-    // Envio do JSON
-    const result = await apiRequest(API.sendFileCrypted, "POST", {
-        fileName: file.name,
-        fileType: file.type,
-        recipientId: recipientId,
-        encryptedBlocks: encryptedBlocks
-    });
+        if (!result || !result.encryptedBlocks || !Array.isArray(result.encryptedBlocks)) {
+            showMessage("error", "Erro ao recuperar os blocos criptografados.");
+            return;
+        }
+        const encryptedBlocks = response.encryptedBlocks;
+        console.log(encryptedBlocks);
 
-    if (result.type === 'success') {
-        showMessage("success", result.message);
-    } else {
-        showMessage("error", result.message);
+        if (result.type === 'success') {
+            showMessage("success", result.message);
+        } else {
+            showMessage("error", result.message);
+        }
     }
 });
 
-    
+//Limpar cabeçalho e rodapé da chve privada
+function cleanPrivateKey(pemKey) {
+    return pemKey
+        .replace('-----BEGIN PRIVATE KEY-----', '')
+        .replace('-----END PRIVATE KEY-----', '')
+        .replace(/\r?\n|\r/g, '')
+        .trim();
+}

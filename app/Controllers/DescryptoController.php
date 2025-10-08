@@ -41,4 +41,68 @@ class DescryptoController extends BaseController
             }
     }
 
+     public function getEncryptedFile(){
+         //Obter dados da sessão
+        $session = \Config\Services::session();
+        if($session->get('logged_in') === NULL ){
+           return redirect()->to('/login');
+		}
+
+        $request = $this->request->getJSON(true); // Pega JSON vindo via POST
+
+        $filePathSelected = $request['filePathSelected'] ?? null;
+
+        $uploadFileId = $request['uploadFileId'] ?? null;
+
+        if (!$filePathSelected || !$uploadFileId) {
+            return $this->response->setJSON([
+                'type' => 'erro',
+                'message' => 'Propriedades do arquivo não fornecidas.',
+            ]);
+        }
+        if (!file_exists($filePathSelected)) {
+            return $this->response->setJSON([
+                'type' => 'erro',
+                'message' => 'Arquivo não encontrado.',
+            ]);
+        }
+
+        // Lê o conteúdo do arquivo criptografado (em blocos RSA criptografados em Base64)
+        $fileContent = file_get_contents($filePathSelected);
+        var_dump($fileContent);
+        exit;
+
+        // Supondo que os blocos foram salvos em Base64 e separados por nova linha
+        $encryptedBlocks = array_filter(array_map('trim', explode("\n", $fileContent)));
+
+        var_dump($encryptedBlocks);
+        exit;
+
+        return $this->respond([
+            'type' => 'success',
+            'message' => 'Arquivo carregado com sucesso.',
+            'encryptedBlocks' => $encryptedBlocks,
+        ]);
+    
+
+        $userId = $session->get()['id'];
+        $model = new FilesModel();
+        $files = $model->searchCryptedFiles($userId);
+        //Formatar aqui a data para o formato não americano
+        
+        if(sizeof($files) == 0) {
+            return $this->response->setJSON([
+                'type' => 'error',
+                'message' => 'Não foram encontrados arquivos para download.',
+                'files' =>$files
+            ]);
+        }else{
+            return $this->response->setJSON([
+                    'type' => 'success',
+                    'message' => 'Arquivos para download encontrados.',
+                    'files' =>$files
+                ]);
+            }
+    }
+
 }
