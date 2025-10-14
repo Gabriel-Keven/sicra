@@ -50,11 +50,11 @@ class DescryptoController extends BaseController
 
         $request = $this->request->getJSON(true); // Pega JSON vindo via POST
 
+        $fileNameSelected = $request['fileNameSelected'] ?? null;
         $filePathSelected = $request['filePathSelected'] ?? null;
-
         $uploadFileId = $request['uploadFileId'] ?? null;
 
-        if (!$filePathSelected || !$uploadFileId) {
+        if (!$filePathSelected || !$uploadFileId ||!$fileNameSelected) {
             return $this->response->setJSON([
                 'type' => 'erro',
                 'message' => 'Propriedades do arquivo não fornecidas.',
@@ -68,41 +68,25 @@ class DescryptoController extends BaseController
         }
 
         // Lê o conteúdo do arquivo criptografado (em blocos RSA criptografados em Base64)
-        $fileContent = file_get_contents($filePathSelected);
-        var_dump($fileContent);
-        exit;
+        $fileContent = file_get_contents($filePathSelected.$fileNameSelected.".enc");
 
         // Supondo que os blocos foram salvos em Base64 e separados por nova linha
         $encryptedBlocks = array_filter(array_map('trim', explode("\n", $fileContent)));
 
-        var_dump($encryptedBlocks);
-        exit;
-
-        return $this->respond([
-            'type' => 'success',
-            'message' => 'Arquivo carregado com sucesso.',
-            'encryptedBlocks' => $encryptedBlocks,
-        ]);
-    
-
-        $userId = $session->get()['id'];
-        $model = new FilesModel();
-        $files = $model->searchCryptedFiles($userId);
-        //Formatar aqui a data para o formato não americano
-        
-        if(sizeof($files) == 0) {
+        if(!$encryptedBlocks){
             return $this->response->setJSON([
                 'type' => 'error',
-                'message' => 'Não foram encontrados arquivos para download.',
-                'files' =>$files
+                'message' => 'Não foram encontrados os blocos para realizar a descriptografia.',
+                'encryptedBlocks' =>$encryptedBlocks
             ]);
         }else{
-            return $this->response->setJSON([
-                    'type' => 'success',
-                    'message' => 'Arquivos para download encontrados.',
-                    'files' =>$files
-                ]);
-            }
-    }
 
+            return $this->response->setJSON([
+                'type' => 'success',
+                'message' => 'Blocos criptografados obtidos com sucesso.',
+                'encryptedBlocks' => $encryptedBlocks,
+            ]);
+        }
+    
+    }
 }

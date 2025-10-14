@@ -157,6 +157,7 @@ async function showFilesToDownload (){
 
         // Data attributes
         option.dataset.filePath = file.file_path;
+        option.dataset.fileName = file.filename;
 
         selectIdSender.appendChild(option);
         });
@@ -167,7 +168,7 @@ async function showFilesToDownload (){
 // =============================
 
 buttonDownloadFile.addEventListener('click', async function(event) {
-    event.preventDefault();
+  event.preventDefault();
 
     const inputFile = document.getElementById('file');
     const file = inputFile.files[0];
@@ -176,50 +177,65 @@ buttonDownloadFile.addEventListener('click', async function(event) {
         showMessage("warning", "Nenhum arquivo selecionado.");
         return;
     }
-    
-    //Leitura do arquivo com FileReader
-    const reader = new FileReader();
 
-    // Lê o arquivo como texto
+    // Lê o arquivo da chave privada
+    const reader = new FileReader();
     reader.readAsText(file);
-    //Quando a leitura terminar
+
     reader.onload = async function(e) {
         const contentTextPrivateKey = cleanPrivateKey(e.target.result);
-        console.log(contentTextPrivateKey);
 
-        //Invocando biblioteca que realiza a criptografia
         const crypt = new JSEncrypt();
-        crypt.setPrivateKey(contentTextPrivateKey)
+        crypt.setPrivateKey(contentTextPrivateKey);
 
         const selectIdSenderOption = selectIdSender.options[selectIdSender.selectedIndex];
+        const fileNameSelected = selectIdSenderOption.dataset.fileName;
         const filePathSelected = selectIdSenderOption.dataset.filePath;
-        console.log(filePathSelected);
-        const uploadFileId = selectIdSenderOption.value; // Obter ID do receptor
+        const uploadFileId = selectIdSenderOption.value;
 
         if (!filePathSelected) {
-            showMessage("warning", "Não foi o caminho do arquivo criptografado que foi feito upload.");
+            showMessage("warning", "Caminho do arquivo criptografado não encontrado.");
             return;
         }
+
         // Busca os blocos criptografados da API
         const result = await apiRequest(API.getEncryptedFile, "POST", {
-            uploadFileId: uploadFileId,
-            filePathSelected: filePathSelected
+            uploadFileId,
+            fileNameSelected,
+            filePathSelected
         });
 
-
-        if (!result || !result.encryptedBlocks || !Array.isArray(result.encryptedBlocks)) {
+        if (!result || !Array.isArray(result.encryptedBlocks)) {
             showMessage("error", "Erro ao recuperar os blocos criptografados.");
             return;
         }
-        const encryptedBlocks = response.encryptedBlocks;
-        console.log(encryptedBlocks);
 
-        if (result.type === 'success') {
-            showMessage("success", result.message);
-        } else {
-            showMessage("error", result.message);
+        const encryptedBlocks = result.encryptedBlocks;
+        let decryptedContent = '';
+
+        showMessage("info", "Descriptografando... aguarde.");
+
+        // Descriptografa cada bloco
+        for (let i = 0; i < encryptedBlocks.length; i++) {
+            const decryptedBlock = crypt.decrypt(encryptedBlocks[i]);
+            if (decryptedBlock === null) {
+                showMessage("error", `Erro ao descriptografar bloco ${i + 1}.`);
+                return;
+            }
+            decryptedContent += decryptedBlock;
         }
-    }
+
+        // Cria o arquivo e faz download
+        const blob = new Blob([decryptedContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileNameSelected.replace('.enc', ''); // remove .enc do nome
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showMessage("success", `Arquivo "${fileNameSelected}" descriptografado e salvo com sucesso!`);
+    };
 });
 
 //Limpar cabeçalho e rodapé da chve privada
