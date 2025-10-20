@@ -348,12 +348,40 @@ buttonSendFile.addEventListener('click', async function(event) {
     const blockSize = 190; // <= 245 bytes máximo, margem de segurança para padding
     const encryptedBlocks = [];
 
+    // for (let i = 0; i < buffer.length; i += blockSize) {
+    //     const chunk = buffer.slice(i, i + blockSize);
+
+    //     // Convertemos o chunk para string antes de criptografar (RSA trabalha com strings)
+        
+    //     // Converte para Base64 antes de criptografar
+    //     const utf8Bytes = new TextEncoder().encode(chunk);
+    //     const base64Texto = btoa(String.fromCharCode(...utf8Bytes));
+    //     const encrypted = crypt.encrypt(base64Texto);
+    //     // const chunkStr = String.fromCharCode(...chunk);
+    //     // const encrypted = crypt.encrypt(chunkStr);
+        
+        
+
+    //     if (!encrypted) {
+    //         showMessage("error", `Erro ao criptografar bloco ${i / blockSize + 1}`);
+    //         return;
+    //     }
+
+    //     encryptedBlocks.push(encrypted);
+    // }
+
+    // Envio do JSON
+
     for (let i = 0; i < buffer.length; i += blockSize) {
         const chunk = buffer.slice(i, i + blockSize);
 
-        // Convertemos o chunk para string antes de criptografar (RSA trabalha com strings)
-        const chunkStr = String.fromCharCode(...chunk);
-        const encrypted = crypt.encrypt(chunkStr);
+        //  Converte para Base64 corretamente
+        const base64Chunk = btoa(
+            Array.from(chunk, byte => String.fromCharCode(byte)).join('')
+        );
+
+        // Criptografa o Base64
+        const encrypted = crypt.encrypt(base64Chunk);
 
         if (!encrypted) {
             showMessage("error", `Erro ao criptografar bloco ${i / blockSize + 1}`);
@@ -363,7 +391,7 @@ buttonSendFile.addEventListener('click', async function(event) {
         encryptedBlocks.push(encrypted);
     }
 
-    // Envio do JSON
+
     const result = await apiRequest(API.sendFileCrypted, "POST", {
         fileName: file.name,
         fileType: file.type,

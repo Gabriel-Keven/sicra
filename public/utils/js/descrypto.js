@@ -216,17 +216,40 @@ buttonDownloadFile.addEventListener('click', async function(event) {
         showMessage("info", "Descriptografando... aguarde.");
 
         // Descriptografa cada bloco
+        // for (let i = 0; i < encryptedBlocks.length; i++) {
+        //     const decryptedBlock = crypt.decrypt(encryptedBlocks[i]);
+        //     if (decryptedBlock === null) {
+        //         showMessage("error", `Erro ao descriptografar bloco ${i + 1}.`);
+        //         return;
+        //     }
+        //     console.log(fromWindows1252(decryptedBlock));
+        //     // const decryptedBase64 = crypt.decrypt(encrypted);
+
+        //     // Converte de volta de Base64 → UTF-8
+        //     const bytes = Uint8Array.from(atob(decryptedBlock), c => c.charCodeAt(0));
+        //     const original = new TextDecoder().decode(bytes);
+        //     decryptedContent += original;
+        // }
+
         for (let i = 0; i < encryptedBlocks.length; i++) {
-            const decryptedBlock = crypt.decrypt(encryptedBlocks[i]);
-            if (decryptedBlock === null) {
+            const decryptedBase64 = crypt.decrypt(encryptedBlocks[i]);
+            if (!decryptedBase64) {
                 showMessage("error", `Erro ao descriptografar bloco ${i + 1}.`);
                 return;
             }
-            decryptedContent += decryptedBlock;
+
+            // Converte de Base64 → bytes (Uint8Array)
+            const bytes = Uint8Array.from(atob(decryptedBase64), c => c.charCodeAt(0));
+
+            // Acumula os bytes para reconstruir o arquivo original
+            decryptedContent += String.fromCharCode(...bytes);
         }
 
         // Cria o arquivo e faz download
-        const blob = new Blob([decryptedContent], { type: 'text/plain' });
+        const byteArray = Uint8Array.from(decryptedContent, c => c.charCodeAt(0));
+        const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+ 
+        // const blob = new Blob([decryptedContent], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -246,3 +269,4 @@ function cleanPrivateKey(pemKey) {
         .replace(/\r?\n|\r/g, '')
         .trim();
 }
+
