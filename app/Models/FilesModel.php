@@ -16,6 +16,7 @@ class FilesModel extends Model
         'filename',
         'file_path',
         'uploaded_at',
+        'file_type'
     ];
 
       public function searchCryptedFiles($userId){

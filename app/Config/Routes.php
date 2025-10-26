@@ -37,7 +37,7 @@ $routes->get('/crypto', 'CryptoController::index');
 $routes->post('insertPublicKey', 'CryptoController::insertPublicKey');
 
 //3 - Método para verificar se as chaves já foram geradas
-$routes->post('checkPublicKey', 'CryptoController::checkPairOfKeysIsCreated');
+$routes->post('checkPublicKey', 'CryptoController::checkPublicKey');
 
 //4 - Método para deletar a chave pública
 $routes->post('deletePublicKey', 'CryptoController::deletePublicKey');
@@ -60,6 +60,9 @@ $routes->post('searchCryptedFiles', 'DescryptoController::searchCryptedFiles');
 
 //2 - Obter o arquivo criptografado
 $routes->post('getEncryptedFile', 'DescryptoController::getEncryptedFile');
+
+// Rota para a API que baixa o conteúdo JSON do arquivo
+$routes->get('/files/download/(:num)', 'DescryptoController::downloadFile/$1');
 
 // Descrypto
 

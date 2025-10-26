@@ -332,78 +332,91 @@ buttonSendFile.addEventListener('click', async function(event) {
 
     const selectIdRecipientOption = selectIdRecipient.options[selectIdRecipient.selectedIndex];
     const publicKeySelected = selectIdRecipientOption.dataset.publicKey;
-    const recipientId = selectIdRecipientOption.value; // Obter ID do receptor
+    const recipientId = selectIdRecipientOption.value;
 
     if (!publicKeySelected) {
         showMessage("warning", "Não foi possível obter a chave pública do destinatário.");
         return;
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
+    showMessage("info", "Iniciando criptografia híbrida...");
 
-    const crypt = new JSEncrypt();
-    crypt.setPublicKey(publicKeySelected);
-
-    const blockSize = 190; // <= 245 bytes máximo, margem de segurança para padding
-    const encryptedBlocks = [];
-
-    // for (let i = 0; i < buffer.length; i += blockSize) {
-    //     const chunk = buffer.slice(i, i + blockSize);
-
-    //     // Convertemos o chunk para string antes de criptografar (RSA trabalha com strings)
-        
-    //     // Converte para Base64 antes de criptografar
-    //     const utf8Bytes = new TextEncoder().encode(chunk);
-    //     const base64Texto = btoa(String.fromCharCode(...utf8Bytes));
-    //     const encrypted = crypt.encrypt(base64Texto);
-    //     // const chunkStr = String.fromCharCode(...chunk);
-    //     // const encrypted = crypt.encrypt(chunkStr);
-        
-        
-
-    //     if (!encrypted) {
-    //         showMessage("error", `Erro ao criptografar bloco ${i / blockSize + 1}`);
-    //         return;
-    //     }
-
-    //     encryptedBlocks.push(encrypted);
-    // }
-
-    // Envio do JSON
-
-    for (let i = 0; i < buffer.length; i += blockSize) {
-        const chunk = buffer.slice(i, i + blockSize);
-
-        //  Converte para Base64 corretamente
-        const base64Chunk = btoa(
-            Array.from(chunk, byte => String.fromCharCode(byte)).join('')
+    try {
+        //Gerar uma chave AES-GCM (simétrica) e um IV (Vetor de Inicialização)
+        // Esta chave será usada para criptografar o *arquivo*
+        const aesKey = await window.crypto.subtle.generateKey(
+            { name: "AES-GCM", length: 256 },
+            true, // Chave exportável
+            ["encrypt", "decrypt"]
         );
 
-        // Criptografa o Base64
-        const encrypted = crypt.encrypt(base64Chunk);
+        // O IV (nonce) deve ser único para cada criptografia com a mesma chave
+        // 96 bits é o ideal para GCM
+        const iv = window.crypto.getRandomValues(new Uint8Array(12)); 
+        
+        //Ler o arquivo e criptografá-lo com AES-GCM
+        const arrayBuffer = await file.arrayBuffer();
+        
+        const encryptedFileBuffer = await window.crypto.subtle.encrypt(
+            {
+                name: "AES-GCM",
+                iv: iv
+            },
+            aesKey,
+            arrayBuffer // Criptografa o buffer inteiro do arquivo
+        );
 
-        if (!encrypted) {
-            showMessage("error", `Erro ao criptografar bloco ${i / blockSize + 1}`);
+        // Criptografar a chave AES com a chave pública RSA
+        
+        // Exportar a chave AES para o formato raw para que seja possível enviar
+        const exportedAesKeyBuffer = await window.crypto.subtle.exportKey("raw", aesKey);
+        
+        // Converter a chave AES (ArrayBuffer) para Base64 (string)
+        // btoa para converter os bytes brutos em uma string Base64
+        const aesKeyBase64 = btoa(
+            Array.from(new Uint8Array(exportedAesKeyBuffer), byte => String.fromCharCode(byte)).join('')
+        );
+
+        // JSEncrypt para criptografar a *string Base64* da chave AES
+        const crypt = new JSEncrypt();
+        crypt.setPublicKey(publicKeySelected);
+        const encryptedAesKey = crypt.encrypt(aesKeyBase64);
+
+        if (!encryptedAesKey) {
+            showMessage("error", "Erro ao criptografar a chave simétrica (AES) com RSA.");
             return;
         }
 
-        encryptedBlocks.push(encrypted);
-    }
+        // Converter o arquivo criptografado (buffer) e o IV (buffer) para Base64
+        // JSON não suporta ArrayBuffers, então converte tudo para Base64
+        const encryptedFileBase64 = btoa(
+             Array.from(new Uint8Array(encryptedFileBuffer), byte => String.fromCharCode(byte)).join('')
+        );
+        const ivBase64 = btoa(
+             Array.from(iv, byte => String.fromCharCode(byte)).join('')
+        );
 
+        // Envinado o payload para o backend
+        showMessage("info", "Enviando arquivo criptografado...");
+        
+        const result = await apiRequest(API.sendFileCrypted, "POST", {
+            fileName: file.name,
+            fileType: file.type,
+            recipientId: recipientId,
+            encryptedKey: encryptedAesKey,  // A chave AES (em Base64), criptografada com RSA
+            iv: ivBase64,                 // O Vetor de Inicialização (em Base64)
+            encryptedFile: encryptedFileBase64 // O arquivo (em Base64), criptografado com AES
+        });
 
-    const result = await apiRequest(API.sendFileCrypted, "POST", {
-        fileName: file.name,
-        fileType: file.type,
-        recipientId: recipientId,
-        encryptedBlocks: encryptedBlocks
-    });
+        if (result.type === 'success') {
+            showMessage("success", result.message);
+            inputFile.value = ''; // Limpa o input do arquivo
+        } else {
+            showMessage("error", result.message);
+        }
 
-    if (result.type === 'success') {
-        showMessage("success", result.message);
-    } else {
-        showMessage("error", result.message);
+    } catch (error) {
+        showMessage("error", `Erro inesperado durante a criptografia: ${error.message}`);
     }
 });
-
     

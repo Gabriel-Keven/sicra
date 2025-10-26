@@ -22,7 +22,8 @@ const contentMessage = document.getElementById('contentMessage');
 // Endpoints API
 const API = {
     searchCryptedFiles: "searchCryptedFiles",
-    getEncryptedFile: "getEncryptedFile"
+    getEncryptedFile: "getEncryptedFile",
+    downloadFile: "/files/download/" // O ID será concatenado
 };
 
 // =============================
@@ -168,99 +169,99 @@ async function showFilesToDownload (){
 // =============================
 
 buttonDownloadFile.addEventListener('click', async function(event) {
-  event.preventDefault();
+    event.preventDefault();
 
-    const inputFile = document.getElementById('file');
-    const file = inputFile.files[0];
-
-    if (!file) {
-        showMessage("warning", "Nenhum arquivo selecionado.");
+    // 1. Validar seleção do arquivo
+    const fileIdToDownload = selectIdSender.value;
+    if (!fileIdToDownload) {
+        showMessage("warning", "Nenhum arquivo selecionado no menu.");
         return;
     }
 
-    // Lê o arquivo da chave privada
-    const reader = new FileReader();
-    reader.readAsText(file);
+    // 2. Validar seleção da chave privada
+    const privateKeyFile = privateKeyInput.files[0];
+    if (!privateKeyFile) {
+        showMessage("warning", "Nenhuma chave privada (.pem) selecionada.");
+        return;
+    }
 
-    reader.onload = async function(e) {
-        const contentTextPrivateKey = cleanPrivateKey(e.target.result);
+    showMessage("info", "Carregando chave privada e baixando arquivo...");
 
-        const crypt = new JSEncrypt();
-        crypt.setPrivateKey(contentTextPrivateKey);
+    // 3. Ler o arquivo da chave privada
+    const reader = new FileReader();
+    reader.readAsText(privateKeyFile);
 
-        const selectIdSenderOption = selectIdSender.options[selectIdSender.selectedIndex];
-        const fileNameSelected = selectIdSenderOption.dataset.fileName;
-        const filePathSelected = selectIdSenderOption.dataset.filePath;
-        const uploadFileId = selectIdSenderOption.value;
+    // 4. Quando a chave estiver lida, iniciar o processo
+    reader.onload = async function(e) {
+        const privateKeyPem = e.target.result;
 
-        if (!filePathSelected) {
-            showMessage("warning", "Caminho do arquivo criptografado não encontrado.");
+        if (!privateKeyPem) {
+            showMessage("error", "Não foi possível ler o conteúdo da chave privada.");
             return;
         }
 
-        // Busca os blocos criptografados da API
-        const result = await apiRequest(API.getEncryptedFile, "POST", {
-            uploadFileId,
-            fileNameSelected,
-            filePathSelected
-        });
+        try {
+            // 5. Baixar o conteúdo JSON criptografado do backend
+            const downloadUrl = API.downloadFile + fileIdToDownload;
+            const encryptedData = await apiRequest(downloadUrl, "GET");
 
-        if (!result || !Array.isArray(result.encryptedBlocks)) {
-            showMessage("error", "Erro ao recuperar os blocos criptografados.");
-            return;
-        }
-
-        const encryptedBlocks = result.encryptedBlocks;
-        let decryptedContent = '';
-
-        showMessage("info", "Descriptografando... aguarde.");
-
-        // Descriptografa cada bloco
-        // for (let i = 0; i < encryptedBlocks.length; i++) {
-        //     const decryptedBlock = crypt.decrypt(encryptedBlocks[i]);
-        //     if (decryptedBlock === null) {
-        //         showMessage("error", `Erro ao descriptografar bloco ${i + 1}.`);
-        //         return;
-        //     }
-        //     console.log(fromWindows1252(decryptedBlock));
-        //     // const decryptedBase64 = crypt.decrypt(encrypted);
-
-        //     // Converte de volta de Base64 → UTF-8
-        //     const bytes = Uint8Array.from(atob(decryptedBlock), c => c.charCodeAt(0));
-        //     const original = new TextDecoder().decode(bytes);
-        //     decryptedContent += original;
-        // }
-
-        for (let i = 0; i < encryptedBlocks.length; i++) {
-            const decryptedBase64 = crypt.decrypt(encryptedBlocks[i]);
-            if (!decryptedBase64) {
-                showMessage("error", `Erro ao descriptografar bloco ${i + 1}.`);
+            if (encryptedData.type === 'error' || !encryptedData.encryptedKey) {
+                showMessage("error", encryptedData.message || "Falha ao baixar os dados do arquivo.");
                 return;
             }
 
-            // Converte de Base64 → bytes (Uint8Array)
-            const bytes = Uint8Array.from(atob(decryptedBase64), c => c.charCodeAt(0));
+            // 6. Iniciar a descriptografia híbrida
+            showMessage("info", "Iniciando descriptografia... Isso pode levar um momento.");
 
-            // Acumula os bytes para reconstruir o arquivo original
-            decryptedContent += String.fromCharCode(...bytes);
+            // 6a. Descriptografar a Chave AES (com RSA)
+            const crypt = new JSEncrypt();
+            crypt.setPrivateKey(privateKeyPem);
+            
+            const decryptedAesKeyBase64 = crypt.decrypt(encryptedData.encryptedKey);
+            if (!decryptedAesKeyBase64) {
+                throw new Error("Falha ao descriptografar a chave do arquivo. Sua chave privada está correta?");
+            }
+
+            // 6b. Converter Chave AES, IV e Arquivo de Base64 para ArrayBuffer
+            const aesKeyBuffer = base64ToArrayBuffer(decryptedAesKeyBase64);
+            const ivBuffer = base64ToArrayBuffer(encryptedData.iv);
+            const encryptedFileBuffer = base64ToArrayBuffer(encryptedData.encryptedFile);
+
+            // 6c. Importar a Chave AES
+            const aesKey = await window.crypto.subtle.importKey(
+                "raw",
+                aesKeyBuffer,
+                { name: "AES-GCM", length: 256 },
+                true,
+                ["decrypt"]
+            );
+
+            // 6d. Descriptografar o Arquivo (com AES)
+            const decryptedFileBuffer = await window.crypto.subtle.decrypt(
+                {
+                    name: "AES-GCM",
+                    iv: ivBuffer
+                },
+                aesKey,
+                encryptedFileBuffer
+            );
+
+            // 7. Sucesso! Disparar o download
+            showMessage("success", "Arquivo descriptografado com sucesso! Iniciando download.");
+            triggerDownload(encryptedData.fileName, encryptedData.fileType, decryptedFileBuffer);
+            
+            // Limpar campos
+            privateKeyInput.value = '';
+
+        } catch (error) {
+            showMessage("error", `Falha na descriptografia: ${error.message}`);
         }
+    };
 
-        // Cria o arquivo e faz download
-        const byteArray = Uint8Array.from(decryptedContent, c => c.charCodeAt(0));
-        const blob = new Blob([byteArray], { type: 'application/octet-stream' });
- 
-        // const blob = new Blob([decryptedContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileNameSelected.replace('.enc', ''); // remove .enc do nome
-        a.click();
-        URL.revokeObjectURL(url);
-
-        showMessage("success", `Arquivo "${fileNameSelected}" descriptografado e salvo com sucesso!`);
+    reader.onerror = function() {
+        showMessage("error", "Falha ao ler o arquivo da chave privada.");
     };
 });
-
 //Limpar cabeçalho e rodapé da chve privada
 function cleanPrivateKey(pemKey) {
     return pemKey
@@ -268,5 +269,35 @@ function cleanPrivateKey(pemKey) {
         .replace('-----END PRIVATE KEY-----', '')
         .replace(/\r?\n|\r/g, '')
         .trim();
+}
+function base64ToArrayBuffer(base64) {
+    try {
+        const binaryString = window.atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    } catch (e) {
+        showMessage("error", "Erro ao decodificar dados (Base64).");
+        throw new Error("Falha ao converter Base64.");
+    }
+}
+
+/**
+ * Dispara o download de um arquivo no navegador.
+ */
+function triggerDownload(fileName, fileType, buffer) {
+    const blob = new Blob([buffer], { type: fileType || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = url;
+    a.download = fileName; // O nome original do arquivo
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
 }
 
