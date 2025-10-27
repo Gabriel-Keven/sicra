@@ -10,7 +10,7 @@
                         <h4>Login</h4>
                     </div>
                     <div class="card-body">
-                        <form method="POST">
+                        <form method="POST" action="<?= url_to('login') ?>">
                             <div class="form-group">
                                 <label for="email">E-mail</label>
                                 <input 
@@ -20,6 +20,7 @@
                                     class="form-control" 
                                     placeholder="Digite aqui o email cadastrado." 
                                     required
+                                    value="<?= old('email') ?>"
                                 >
                             </div>
                             <div class="form-group">
@@ -33,11 +34,17 @@
                                     required
                                 >
                             </div>
+                            <label for="remember">
+                                <input type="checkbox" name="remember" <?php if (old('remember')) : ?> checked <?php endif ?>>
+                                Lembrar-me
+                            </label>
                             <div class="card-footer">
-                                <button type="submit" class="mt-3 btn btn-success btn-block" id="loginButton">Login</button>
+                                <button type="submit" class="mt-3 btn btn-success btn-block">Login</button>
+                                <!-- <button type="submit" class="mt-3 btn btn-success btn-block" id="loginButton">Login</button> -->
                                 <a href="<?=base_url('/register')?>" class="mt-3 btn btn-primary btn-block">Cadastro</a>
                                 <a href="<?=base_url('/')?>" class="mt-3 btn btn-secondary btn-block">Início</a>
                             </div>
+                            
                         </form>
                     </div>
                 </div>

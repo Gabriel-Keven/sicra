@@ -34,6 +34,7 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        'session' => \CodeIgniter\Shield\Filters\SessionAuth::class,
     ];
 
     /**
@@ -75,6 +76,7 @@ class Filters extends BaseFilters
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
+            'session' => ['except' => ['login*', 'register']]
         ],
         'after' => [
             // 'honeypot',

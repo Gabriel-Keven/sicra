@@ -9,6 +9,17 @@
                     </div>
                 <div class="card">
                     <div class="card-header text-center">
+                        <h4>Verificação da segurança</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Gerencie a verificação em duas etapas para proteger sua conta.</p>
+                            <a href="<?= url_to('2fa-show') ?>" class="mt-3 btn btn-primary btn-block">
+                            Gerenciar Verificação em Duas Etapas
+                        </a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header text-center">
                         <h4>Atualizar seus dados</h4>
                     </div>
                     <div class="card-body">

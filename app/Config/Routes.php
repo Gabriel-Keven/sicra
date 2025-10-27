@@ -77,4 +77,14 @@ $routes->post('getDateUser', 'UserController::getDateUser');
 //2 - Atualizar os dados do usuário no banco de dados
 $routes->post('updateUser', 'UserController::updateUser');
 
+service('auth')->routes($routes);
+$routes->group('account', ['filter' => 'session'], static function ($routes) {
+    // Aponta para \App\Controllers\TwoFactorAuthController
+    $routes->get('2fa', 'TwoFactorAuthController::show', ['as' => '2fa-show']);
+    $routes->post('2fa/enable', 'TwoFactorAuthController::enable', ['as' => '2fa-enable']);
+    $routes->post('2fa/disable', 'TwoFactorAuthController::disable', ['as' => '2fa-disable']);
+    $routes->get('2fa/verify', 'TwoFactorAuthController::verifyShow', ['as' => '2fa-verify-show']);
+    $routes->post('2fa/verify', 'TwoFactorAuthController::verify', ['as' => '2fa-verify']);
+    $routes->get('2fa/codes', 'TwoFactorAuthController::codesShow', ['as' => '2fa-codes']);
+});
 // User

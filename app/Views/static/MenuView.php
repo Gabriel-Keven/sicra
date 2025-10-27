@@ -17,7 +17,8 @@
           <a class="nav-link active" aria-current="page" href="/descrypto">Download de arquivo</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/logout">Sair</a>
+          <!-- <a class="nav-link active" aria-current="page" href="/logout">Sair</a> -->
+          <a class="nav-link active" aria-current="page" href="<?= url_to('logout') ?>">Sair</a>
         </li>
       </ul>
     </div>
