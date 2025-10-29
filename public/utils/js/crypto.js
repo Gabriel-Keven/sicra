@@ -231,7 +231,7 @@ async function showTableUsersHavePublicKey() {
 });
 
 }
-// =============================
+// ============================
 // Seleção dos usuários para enviar o arquivo
 // =============================
 
