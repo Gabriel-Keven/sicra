@@ -1,11 +1,21 @@
 version: "3.9"
 
+networks:
+  sicra-net: # Rede para todos os serviços se comunicarem
+    driver: bridge
+
+volumes:
+  db_data:
+  nginx_data: # Volume para o Nginx Proxy Manager
+  nginx_letsencrypt_data: # <-- ADICIONADO: Volume separado para o letsencrypt
+
 services:
   app:
     build: .
     container_name: sicra_app
-    ports:
-      - "8080:80"   # acessar em http://localhost:8080
+    # !!! PORTA REMOVIDA !!! O Nginx vai gerenciar isso
+    # ports:
+    #   - "8080:80"
     volumes:
       - .:/var/www/html
     environment:
@@ -13,6 +23,8 @@ services:
       - APACHE_RUN_GROUP=www-data
     depends_on:
       - db
+    networks: # Adicionado à rede
+      - sicra-net
 
   db:
     image: mysql:8.0
@@ -24,21 +36,41 @@ services:
       MYSQL_USER: sicra_user
       MYSQL_PASSWORD: sicra_pass
     ports:
-      - "3306:3306"
+      - "3306:3306" # Mantém a porta do DB exposta para acesso local (ex: DBeaver)
     volumes:
       - db_data:/var/lib/mysql
+    networks: # Adicionado à rede
+      - sicra-net
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: sicra_phpmyadmin
     restart: always
     ports:
-      - "8081:80"   # acessar em http://localhost:8081
+      - "8081:80" # Mantém o PhpMyAdmin na sua porta
     environment:
-      PMA_HOST: db
+      PMA_HOST: db # Correto, 'db' é o nome do serviço
       MYSQL_ROOT_PASSWORD: root
     depends_on:
       - db
+    networks: # Adicionado à rede
+      - sicra-net
 
-volumes:
-  db_data:
+  # --- SERVIÇO NGINX ADICIONADO ---
+  httpweb:
+    container_name: nginx-proxy-manager
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: always
+    ports:
+       - '80:80'
+       - '443:443'
+       - '81:81'
+    volumes:
+       - nginx_data:/data
+       - nginx_letsencrypt_data:/etc/letsencrypt
+       - /etc/timezone:/etc/timezone:ro
+       - /etc/localtime:/etc/localtime:ro
+    networks:
+      - sicra-net
+    depends_on:
+      - app
