@@ -1,68 +1,76 @@
-# CodeIgniter 4 Application Starter
+# SICRA - Sistema de Criptografia de Arquivos
 
-## What is CodeIgniter?
+![PHP](https://img.shields.io/badge/PHP-8.1-777BB4?style=for-the-badge&logo=php)
+![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.0-EF4223?style=for-the-badge&logo=codeigniter)
+![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+> **Projeto de Trabalho de Conclusão de Curso (TCC)**
+> Engenharia de Controle e Automação
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+## O Projeto
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+O **SICRA** é um protótipo web desenvolvido para garantir a confidencialidade e integridade no armazenamento e compartilhamento de arquivos. O projeto visa resolver o problema de segurança na troca de informações sensíveis utilizando **Criptografia Híbrida**.
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+## A Criptografia (Arquitetura)
 
-## Installation & updates
+O SICRA foi idealizaod para implementar a criptografia híbrida para otimizar desempenho e segurança:
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+1.  **Criptografia do Arquivo (AES-256):**
+    * O arquivo enviado é criptografado usando o algoritmo simétrico **AES** (Advanced Encryption Standard) com uma chave aleatória gerada para aquela sessão. Isso garante velocidade no processamento de arquivos grandes.
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+2.  **Proteção da Chave (RSA):**
+    * A chave AES gerada no passo anterior é criptografada utilizando a **Chave Pública RSA** do destinatário.
+    * Apenas o dono da **Chave Privada** correspondente consegue descriptografar a chave AES e, consequentemente, acessar o conteúdo do arquivo.
 
-## Setup
+3.  **Estrutura do Arquivo Final:**
+    * O arquivo salvo no servidor contém: `[Chave AES Cifrada] + [IV] + [Conteúdo do Arquivo Cifrado]`.
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+## Tecnologias Utilizadas
 
-## Important Change with index.php
+* **Linguagem:** PHP 8.1+
+* **Framework:** CodeIgniter 4
+* **Criptografia:** OpenSSL Library (AES-256-CBC, RSA-2048)
+* **Ambiente:** Docker & Docker Compose
+* **Servidor Web:** Apache / Nginx
+* **Banco de Dados:** MySQL/MariaDB
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+## Instalação e Execução
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+### Opção 1: Via Docker (Recomendado)
 
-**Please** read the user guide for a better explanation of how CI4 works!
+Certifique-se de ter o Docker e o Docker Compose instalados.
 
-## Repository Management
+1. Clone o repositório:
+   ```bash
+   git clone [https://github.com/Gabriel-Keven/sicra.git](https://github.com/Gabriel-Keven/sicra.git)
+   cd sicra
+2. Configure as variáveis de ambiente:
+```Bash
+    cp env .env
+    # Edite o arquivo .env se necessário (configurações de DB, baseURL, etc)
+```
+3. Suba os containers:
+```bash
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+    docker-compose up -d --build
+```
+4. Acesse o sistema: Abra o navegador em http://localhost:8080 (ou a porta configurada).
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+Opção 2: Instalação Manual
 
-## Server Requirements
+1. Instale as dependências via Composer:
+```bash
 
-PHP version 8.1 or higher is required, with the following extensions installed:
+composer install
+```
+2. Inicie o servidor embutido do CodeIgniter:
+```bash
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+    php spark serve
+```
+Contribuição
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - If you are still using PHP 7.4 or 8.0, you should upgrade immediately.
-> - The end of life date for PHP 8.1 will be December 31, 2025.
+Este é um projeto acadêmico. Sugestões e feedbacks são bem-vindos para fins de aprendizado e melhoria da arquitetura de segurança.
 
-Additionally, make sure that the following extensions are enabled in your PHP:
-
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+Desenvolvido por Gabriel Keven
