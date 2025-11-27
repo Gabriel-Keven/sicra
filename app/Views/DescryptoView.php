@@ -33,7 +33,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="file">Fazer upload da chave privada(Não divgulge para ninguém)</label>
+                                <label for="file">Fazer upload da chave privada(Não divulgue para ninguém)</label>
                                 <input type="file" class="form-control" id="privateKeyInput" placeholder="Envie a chave privada aqui" accept=".pem" required>
                             </div>
                             <button type="submit" class="mt-3 btn btn-success btn-block" id="buttonDownloadFile">Baixar Arquivo descriptografado</button>
