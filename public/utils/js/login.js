@@ -47,6 +47,8 @@ async function loginUser(user) {
         let data = await response.json();
         message.classList.remove('d-none');
         message.classList.remove('alert-primary');
+        message.classList.remove('alert-danger');
+        message.classList.remove('alert-success');
 
         if(data.type == 'success'){
             message.classList.add('alert-success');
